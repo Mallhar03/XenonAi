@@ -16,7 +16,11 @@ export default function ReviewQueue() {
       try {
         const res = await fetch('/api/reviews/queue');
         const data = await res.json();
-        setReviews(data || []);
+        if (Array.isArray(data)) {
+          setReviews(data);
+        } else {
+          setReviews([]);
+        }
       } catch (err) {
         console.error(err);
       } finally {
