@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:is(.dark *), .dark&);
 
 @theme inline {
   --color-background: var(--background);
@@ -129,27 +129,24 @@
   }
 }
 
-/* Hard Turbopack Bypass for Theme Toggling */
-html, html.light {
-  background-color: #f8fafc !important; /* slate-50 */
-}
-html.dark {
-  background-color: #0A0A0A !important;
-}
+/* ================================================
+   THEME OVERRIDES — these MUST come after Tailwind
+   ================================================ */
 
+/* Light mode (default / explicit .light class) */
+html:not(.dark) body,
 html.light body {
-  background-color: #f8fafc !important;
-  color: #0f172a !important; /* slate-900 */
-}
-html.dark body {
-  background-color: #0A0A0A !important;
-  color: #e2e8f0 !important; /* slate-200 */
+  background-color: #f8fafc;
+  color: #0f172a;
 }
 
-/* Force specific component overrides */
-html.light .theme-dark-only {
-  display: none !important;
+/* Dark mode */
+html.dark body {
+  background-color: #0a0a0a;
+  color: #e2e8f0;
 }
-html.dark .theme-light-only {
-  display: none !important;
+
+/* Smooth transition on theme switch */
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
 }

@@ -1,61 +1,43 @@
 "use client";
 
+import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import { Sun, Moon } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function ThemeToggle() {
-  const [isDark, setIsDark] = useState(true);
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
+  // Only render after mount to avoid hydration mismatch
   useEffect(() => {
-    // Physical DOM tracking
-    const isCurrentlyDark = document.documentElement.classList.contains("dark");
-    setIsDark(isCurrentlyDark);
     setMounted(true);
   }, []);
 
-  const toggleTheme = () => {
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.remove("dark");
-      root.classList.add("light");
-      localStorage.setItem("theme", "light");
-      setIsDark(false);
-    } else {
-      root.classList.remove("light");
-      root.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-      setIsDark(true);
-    }
-  };
+  if (!mounted) return <div className="w-10 h-10" />;
 
-  if (!mounted) return <div className="w-9 h-9" />;
+  const isDark = resolvedTheme === "dark";
 
   return (
     <button
-      onClick={toggleTheme}
-      className="relative flex items-center justify-center w-10 h-10 rounded-full bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors duration-300"
-      aria-label="Toggle Dark Mode"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className="relative flex items-center justify-center w-10 h-10 rounded-full border border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition-all duration-200"
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >
-      <div className="relative flex items-center justify-center w-full h-full">
-        <motion.div
-          initial={false}
-          animate={{ scale: isDark ? 0 : 1, opacity: isDark ? 0 : 1 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="absolute"
-        >
-          <Sun className="w-5 h-5 text-amber-500" />
-        </motion.div>
-        <motion.div
-          initial={false}
-          animate={{ scale: isDark ? 1 : 0, opacity: isDark ? 1 : 0 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="absolute"
-        >
-          <Moon className="w-5 h-5 text-purple-400" />
-        </motion.div>
-      </div>
+      <motion.span
+        key={isDark ? "moon" : "sun"}
+        initial={{ scale: 0, rotate: -90, opacity: 0 }}
+        animate={{ scale: 1, rotate: 0, opacity: 1 }}
+        exit={{ scale: 0, rotate: 90, opacity: 0 }}
+        transition={{ duration: 0.2, ease: "easeInOut" }}
+        className="absolute"
+      >
+        {isDark ? (
+          <Sun className="w-5 h-5 text-amber-400" />
+        ) : (
+          <Moon className="w-5 h-5 text-indigo-600" />
+        )}
+      </motion.span>
     </button>
   );
 }
