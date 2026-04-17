@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line, ReferenceLine } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line, ReferenceLine, AreaChart, Area, CartesianGrid } from "recharts";
 import { Activity, AlertTriangle, MessageSquare, TrendingUp, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -49,17 +49,20 @@ export default function Dashboard() {
   const [activeAlertsList, setActiveAlertsList] = useState<any[]>([]);
   const [reviewsCount, setReviewsCount] = useState(0);
   const [avgSentiment, setAvgSentiment] = useState(75);
+  const [forecastData, setForecastData] = useState<any[]>([]);
 
   const fetchDashboardData = async () => {
     try {
-      const [fRes, tRes, aRes] = await Promise.all([
+      const [fRes, tRes, aRes, fcRes] = await Promise.all([
         fetch('/api/features'),
         fetch('/api/trends'),
-        fetch('/api/alerts')
+        fetch('/api/alerts'),
+        fetch('/api/forecasts?product_id=demo-smartphone&feature=battery_life')
       ]);
       const fData = await fRes.json();
       const tData = await tRes.json();
       const aData = await aRes.json();
+      const fcData = await fcRes.json();
       
       if (fData && fData.features) {
          setFeatureData(fData.features.length > 0 ? fData.features : fallbackFeatureData);
@@ -77,6 +80,10 @@ export default function Dashboard() {
       }
       
       if (aData && Array.isArray(aData)) setActiveAlertsList(aData);
+
+      if (fcData && fcData.length > 0 && fcData[0].data) {
+        setForecastData(fcData[0].data);
+      }
     } catch(err) {
       console.error(err);
     }
@@ -162,7 +169,7 @@ export default function Dashboard() {
                     <YAxis type="category" dataKey="feature" width={100} stroke="#aaa" tickLine={false} axisLine={false} />
                     <Tooltip 
                       cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                      formatter={(v: number) => `${v}%`} 
+                      formatter={(v: any) => `${v}%`} 
                       contentStyle={{ backgroundColor: '#1A1A1A', borderColor: '#333', color: '#fff', borderRadius: '8px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)' }}
                     />
                     <Legend wrapperStyle={{ paddingTop: '20px' }} />
@@ -223,7 +230,7 @@ export default function Dashboard() {
                     <YAxis stroke="#555" tickLine={false} axisLine={false} tickFormatter={v => `${v}%`} />
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#1A1A1A', borderColor: '#333', color: '#fff', borderRadius: '8px', border: '1px solid #333', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)' }}
-                      formatter={(val: number) => [`${val}%`, "Negative Pct"]} 
+                      formatter={(val: any) => [`${val}%`, "Negative Pct"]} 
                       labelStyle={{ color: '#aaa', marginBottom: '8px', display: 'block' }}
                     />
                     <Line 
@@ -238,6 +245,72 @@ export default function Dashboard() {
                     <ReferenceLine x="Batch 13" stroke="#EF4444" strokeDasharray="3 3">
                     </ReferenceLine>
                   </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* M24 Lifecycle Forecast Chart */}
+        <motion.div variants={itemVariants}>
+          <Card className="bg-white/5 border-white/10 backdrop-blur-md hover:bg-white/[0.06] transition-all shadow-xl group overflow-hidden relative">
+            <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/40 to-emerald-500/0" />
+            <CardHeader className="relative z-10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-semibold text-white">Lifecycle Forecast (M24 Decay Curve)</CardTitle>
+                  <CardDescription className="text-slate-400">ARIMA-powered projection of sentiment stability post-launch</CardDescription>
+                </div>
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 flex items-center gap-1.5 py-1 px-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  PREDICTIVE
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="relative z-10">
+              <div className="h-[300px] w-full mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={forecastData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorPred" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="cohort" stroke="#555" tickLine={false} axisLine={false} />
+                    <YAxis stroke="#555" tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={(v: any) => `${v}%`} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1A1A1A', borderColor: '#333', color: '#fff', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)' }}
+                      itemStyle={{ color: '#fff' }}
+                      formatter={(v: any) => [`${v}%`, "Sentiment"]}
+                    />
+                    <Legend verticalAlign="top" height={36} iconType="circle" />
+                    <Area 
+                      type="monotone" 
+                      dataKey="actual" 
+                      stroke="#10B981" 
+                      strokeWidth={3}
+                      fillOpacity={1} 
+                      fill="url(#colorActual)" 
+                      name="Actual Sentiment" 
+                      connectNulls={false}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="predicted" 
+                      stroke="#8B5CF6" 
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      fillOpacity={1} 
+                      fill="url(#colorPred)" 
+                      name="Forecast (ARIMA)" 
+                    />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
