@@ -1,0 +1,19 @@
+[
+    {"text": "The camera is absolutely stunning, but honestly the battery life is terrible.", "sentiment": "negative"},
+    {"text": "Screen snapped in half instantly after opening the box.", "sentiment": "negative"},
+    {"text": "Customer care is not replying.", "sentiment": "negative"},
+    {"text": "Revolutionary piece of garbage technology.", "sentiment": "negative"},
+    {"text": "10/10 would definitely not recommend this to my worst enemy.", "sentiment": "negative"},
+    {"text": "Beautiful design.", "sentiment": "positive"},
+    {"text": "Takes awful photos in low light.", "sentiment": "negative"},
+    {"text": "Heating issue after 10 mins of gaming.", "sentiment": "negative"},
+    {"text": "Everything works smoothly without lag.", "sentiment": "positive"},
+    {"text": "My phone ekdum bakwas hai, screen break ho gaya in 2 days.", "sentiment": "negative"},
+    {"text": "Absolutely love the new software update.", "sentiment": "positive"},
+    {"text": "The UI feels extremely clunky and slow.", "sentiment": "negative"},
+    {"text": "Worst purchase I've ever made.", "sentiment": "negative"},
+    {"text": "Best smartphone of the year hands down.", "sentiment": "positive"},
+    {"text": "It only took 3 hours to charge to 50%", "sentiment": "negative"},
+    {"text": "Decent phone for the price.", "sentiment": "neutral"},
+    {"text": "It's okay, nothing special but it works.", "sentiment": "neutral"}
+]

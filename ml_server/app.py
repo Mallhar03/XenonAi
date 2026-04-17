@@ -4,8 +4,17 @@ from pydantic import BaseModel
 import spacy
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from typing import List, Optional, Dict, Any
+import joblib
 
 app = FastAPI()
+
+# Load Advanced Supervised Model
+custom_classifier = None
+try:
+    custom_classifier = joblib.load("advanced_model.pkl")
+    print("Advanced Local ML Model bound to memory!")
+except Exception as e:
+    print(f"Warning: Supervised model not loaded. Falling back to VADER heuristics. Error: {e}")
 
 # Load models safely
 try:
@@ -73,12 +82,28 @@ async def extract_nlp(payload: ReviewRequest):
         
     doc = nlp(text)
     
-    # 1. Overall sentiment analysis across entire text
-    vs_overall = analyzer.polarity_scores(text)
-    overall_sentiment = score_to_sentiment(vs_overall["compound"])
-    
-    # Confidence is magnitude of polarity; VADER maxes at 1.0
-    overall_confidence = round((abs(vs_overall["compound"]) * 0.5) + (vs_overall["neu"] * 0.5), 2)
+    # ML Prediction Override block
+    ml_override = False
+    if custom_classifier is not None:
+        try:
+            # Vectorize and Predict using .pkl model
+            ml_pred = custom_classifier.predict([text])[0]
+            ml_probas = custom_classifier.predict_proba([text])[0]
+            ml_conf = max(ml_probas)
+            
+            # If the trained model is confident enough, override heuristic VADER completely
+            if ml_conf > 0.55:
+                overall_sentiment = ml_pred
+                overall_confidence = round(ml_conf, 2)
+                ml_override = True
+        except Exception as e:
+            pass
+            
+    if not ml_override:
+        # Fallback to 1. Overall sentiment analysis across entire text using VADER Heuristics
+        vs_overall = analyzer.polarity_scores(text)
+        overall_sentiment = score_to_sentiment(vs_overall["compound"])
+        overall_confidence = round((abs(vs_overall["compound"]) * 0.5) + (vs_overall["neu"] * 0.5), 2)
     
     # 2. Extract specific features (Dependency Parsing)
     extracted_features = extract_features(doc)
@@ -100,9 +125,10 @@ async def extract_nlp(payload: ReviewRequest):
             sarcasm_reason = "High emotional polarity variance detected across sentences"
             
     # Ambiguity check
-    if vs_overall["neu"] > 0.8:
+    if not ml_override and vs_overall["neu"] > 0.8:
         ambiguity = True
         ambiguity_reason = "Highly neutral syntax with conflicting passive descriptors"
+        
         
     return {
         "overall_sentiment": overall_sentiment,

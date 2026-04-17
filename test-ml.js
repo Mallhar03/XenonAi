@@ -1,4 +1,3 @@
-const fetch = require('node-fetch');
 
 async function testML() {
   const res = await fetch('http://127.0.0.1:5000/extract', {
